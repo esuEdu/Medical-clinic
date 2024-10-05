@@ -1,0 +1,35 @@
+# Node modules
+node_modules/
+npm-debug.log
+yarn-error.log
+
+# Logs
+*.log
+logs/
+*.tmp
+*.lock
+
+# Build directories
+dist/
+.build/
+
+# Serverless Framework Files
+.serverless/
+.env
+.env.*
+.slsignore
+
+# Coverage directories
+coverage/
+nyc_output/
+
+# AWS specific files
+.aws-sam/
+.terraform/
+!package.json
+!serverless.yml
+!handler.js
+
+# Operating system files
+.DS_Store
+Thumbs.db
