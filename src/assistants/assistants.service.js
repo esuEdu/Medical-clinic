@@ -1,8 +1,8 @@
 import dynamoose from "dynamoose";
 import crypto from "node:crypto";
-import { appointmentSchema } from "./appointments.schema";
+import { assistantSchema } from "./assistants.schema.js";
 
-const AppointmentModel = dynamoose.model("Appointment", appointmentSchema, {
+const AssistantModel = dynamoose.model("Assistant", assistantSchema, {
   create: true,
   waitForActive: false,
 });
@@ -10,21 +10,21 @@ const AppointmentModel = dynamoose.model("Appointment", appointmentSchema, {
 async function create(payload) {
   payload.id = crypto.randomUUID();
 
-  payload.PK = `APPOINTMENT#${payload.id}`;
+  payload.PK = `ASSISTANT#${payload.id}`;
 
-  const { PK, ...result } = await AppointmentModel.create(payload);
+  const { PK, ...result } = await AssistantModel.create(payload);
 
   return result;
 }
 
 async function getOneById(id) {
-  const { PK, ...result } = await AppointmentModel.get(`APPOINTMENT#${id}`);
+  const { PK, ...result } = await AssistantModel.get(`ASSISTANT#${id}`);
 
   return result;
 }
 
 async function getAll() {
-  const result = await AppointmentModel.scan().exec();
+  const result = await AssistantModel.scan().exec();
 
   return result.map((item) => {
     item.PK = undefined;
@@ -33,20 +33,20 @@ async function getAll() {
 }
 
 async function update(id, payload) {
-  const { PK, ...result } = await AppointmentModel.update(`APPOINTMENT#${id}`, payload);
+  const { PK, ...result } = await AssistantModel.update(`ASSISTANT#${id}`, payload);
 
   return result;
 }
 
 async function deleteById(id) {
   try {
-    await AppointmentModel.delete({ PK: `APPOINTMENT#${id}` });
+    await AssistantModel.delete({ PK: `ASSISTANT#${id}` });
     console.log("Successfully deleted item");
   } catch (error) {
     console.error(error);
   }
 
-  return { message: "Appointment deleted successfully" };
+  return { message: "Assistant deleted successfully" };
 }
 
 export default {

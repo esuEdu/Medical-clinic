@@ -6,25 +6,255 @@ service: Medical-Clinic
 provider:
   name: aws
   runtime: nodejs20.x
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:*
+            - events:*
+          Resource: "*"
 
 functions:
-  hello:
-    handler: handler.hello
+# Patient functions and resources
+  patientsCreate:
+    handler: src/patients/functions/create.handler
+    name: ${sls:stage}-patients-create
     events:
       - httpApi:
-          path: /
+          method: post
+          path: /patients
+
+  patientsGetAll:
+    handler: src/patients/functions/get.getAllHandler
+    name: ${sls:stage}-patients-get-all
+    events:
+      - httpApi:
           method: get
+          path : /patients
+  
+  patientsGetById:
+    handler: src/patients/functions/get.getByIdHandler
+    name: ${sls:stage}-patients-get-by-id
+    events:
+      - httpApi:
+          method: get
+          path : /patients/{id}
+  
+  patientsPatch:
+    handler: src/patients/functions/patch.handler
+    name: ${sls:stage}-patients-patch
+    events:
+      - httpApi:
+          method: patch
+          path : /patients/{id}
+
+  patientsDelete:
+    handler: src/patients/functions/remove.handler
+    name: ${sls:stage}-patients-delete
+    events:
+      - httpApi:
+          method: delete
+          path : /patients/{id}
+          
+  patientsMailSender:
+    handler: src/patients/functions/mailSender.handler
+    name: ${sls:stage}-patients-mail-sender
+    events:
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - "medical-clinic"
+            detail-type:
+              - "patient-created"
+
+  patientsPushSender:
+    handler: src/patients/functions/pushSender.handler
+    name: ${sls:stage}-patients-push-sender
+    events:
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - "medical-clinic"
+            detail-type:
+              - "patient-created"
+
+  # Doctor functions and resources
+  doctorsCreate:
+    handler: src/doctors/functions/create.handler
+    name: ${sls:stage}-doctors-create
+    events:
+      - httpApi:
+          method: post
+          path: /doctors
+
+  doctorsGetAll:
+    handler: src/doctors/functions/get.getAllHandler
+    name: ${sls:stage}-doctors-get-all
+    events:
+      - httpApi:
+          method: get
+          path : /doctors
+
+  doctorsGetById:
+    handler: src/doctors/functions/get.getByIdHandler
+    name: ${sls:stage}-doctors-get-by-id
+    events:
+      - httpApi:
+          method: get
+          path : /doctors/{id}
+  
+  doctorsPatch:
+    handler: src/doctors/functions/patch.handler
+    name: ${sls:stage}-doctors-patch
+    events:
+      - httpApi:
+          method: patch
+          path : /doctors/{id}
+
+  doctorsDelete:
+    handler: src/doctors/functions/remove.handler
+    name: ${sls:stage}-doctors-delete
+    events:
+      - httpApi:
+          method: delete
+          path : /doctors/{id}
+
+  # Assistant functions and resources
+  assistantsCreate:
+    handler: src/assistants/functions/create.handler
+    name: ${sls:stage}-assistants-create
+    events:
+      - httpApi:
+          method: post
+          path: /assistants
+  
+  assistantsGetAll:
+    handler: src/assistants/functions/get.getAllHandler
+    name: ${sls:stage}-assistants-get-all
+    events:
+      - httpApi:
+          method: get
+          path : /assistants
+
+  assistantsGetById:
+    handler: src/assistants/functions/get.getByIdHandler
+    name: ${sls:stage}-assistants-get-by-id
+    events:
+      - httpApi:
+          method: get
+          path : /assistants/{id}
+  
+  assistantsPatch:
+    handler: src/assistants/functions/patch.handler
+    name: ${sls:stage}-assistants-patch
+    events:
+      - httpApi:
+          method: patch
+          path : /assistants/{id}
+
+  assistantsDelete:
+    handler: src/assistants/functions/remove.handler
+    name: ${sls:stage}-assistants-delete
+    events:
+      - httpApi:
+          method: delete
+          path : /assistants/{id}
+
+  # Appointment functions and resources
+  appointmentsCreate:
+    handler: src/appointments/functions/create.handler
+    name: ${sls:stage}-appointments-create
+    events:
+      - httpApi:
+          method: post
+          path: /appointments
+  
+  appointmentsGetAll:
+    handler: src/appointments/functions/get.getAllHandler
+    name: ${sls:stage}-appointments-get-all
+    events:
+      - httpApi:
+          method: get
+          path : /appointments
+
+  appointmentsGetById:
+    handler: src/appointments/functions/get.getByIdHandler
+    name: ${sls:stage}-appointments-get-by-id
+    events:
+      - httpApi:
+          method: get
+          path : /appointments/{id}
+
+  appointmentsPatch:
+    handler: src/appointments/functions/patch.handler
+    name: ${sls:stage}-appointments-patch
+    events:
+      - httpApi:
+          method: patch
+          path : /appointments/{id}
+
+  appointmentsDelete:
+    handler: src/appointments/functions/remove.handler
+    name: ${sls:stage}-appointments-delete
+    events:
+      - httpApi:
+          method: delete
+          path : /appointments/{id}
 
 resources:
   Resources:
+
+  # Doctor Table
+    DoctorTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-Doctor
+        AttributeDefinitions:
+          - AttributeName: PK #DoctorId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK #DoctorId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+  # Assistant Table
+    AssistantTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-Assistant
+        AttributeDefinitions:
+          - AttributeName: PK #AssistantId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK #AssistantId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+  # Patient Table
     PatientTable:
       Type: AWS::DynamoDB::Table
       Properties:
-        TableName: Patient
+        TableName: ${sls:stage}-Patient
         AttributeDefinitions:
-          - AttributeName: PK #taxId
+          - AttributeName: PK #PatientId
             AttributeType: S
         KeySchema:
-          - AttributeName: PK #taxId
+          - AttributeName: PK #PatientId
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+
+  # Appointment Table
+    AppointmentTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: ${sls:stage}-Appointment
+        AttributeDefinitions:
+          - AttributeName: PK #AppointmentId
+            AttributeType: S
+        KeySchema:
+          - AttributeName: PK #AppointmentId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST

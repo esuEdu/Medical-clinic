@@ -1,6 +1,6 @@
 import dynamoose from "dynamoose";
 
-export const PatientSchema = new dynamoose.Schema(
+export const doctorSchema = new dynamoose.Schema(
   {
     //primary key
     //PatientId
@@ -9,14 +9,13 @@ export const PatientSchema = new dynamoose.Schema(
       hashKey: true,
     },
 
-    //personal data
     id: String,
-    taxId: String,
-    healthInsurance: String,
     name: String,
-    email: String,
-    birthDate: Date,
+    taxId: String,
+    medicalRegistration: String,
+    specialty: String,
     phoneNumber: String,
+    email: String,
     address: {
       type: Object,
       schema: {
@@ -28,23 +27,6 @@ export const PatientSchema = new dynamoose.Schema(
         state: String,
         zipCode: String,
       },
-    },
-
-    //health data
-    weight: Number,
-    height: Number,
-    bloodType: String,
-    allergies: {
-      type: Array,
-      schema: [String],
-    },
-    diseases: {
-      type: Array,
-      schema: [String],
-    },
-    medications: {
-      type: Array,
-      schema: [String],
     },
   },
   {
