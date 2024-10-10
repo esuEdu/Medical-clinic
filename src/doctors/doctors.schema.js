@@ -3,7 +3,7 @@ import dynamoose from "dynamoose";
 export const doctorSchema = new dynamoose.Schema(
   {
     //primary key
-    //PatientId
+    //DoctorId
     PK: {
       type: String,
       hashKey: true,

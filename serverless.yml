@@ -16,71 +16,6 @@ provider:
           Resource: "*"
 
 functions:
-# Patient functions and resources
-  patientsCreate:
-    handler: src/patients/functions/create.handler
-    name: ${sls:stage}-patients-create
-    events:
-      - httpApi:
-          method: post
-          path: /patients
-
-  patientsGetAll:
-    handler: src/patients/functions/get.getAllHandler
-    name: ${sls:stage}-patients-get-all
-    events:
-      - httpApi:
-          method: get
-          path : /patients
-  
-  patientsGetById:
-    handler: src/patients/functions/get.getByIdHandler
-    name: ${sls:stage}-patients-get-by-id
-    events:
-      - httpApi:
-          method: get
-          path : /patients/{id}
-  
-  patientsPatch:
-    handler: src/patients/functions/patch.handler
-    name: ${sls:stage}-patients-patch
-    events:
-      - httpApi:
-          method: patch
-          path : /patients/{id}
-
-  patientsDelete:
-    handler: src/patients/functions/remove.handler
-    name: ${sls:stage}-patients-delete
-    events:
-      - httpApi:
-          method: delete
-          path : /patients/{id}
-          
-  patientsMailSender:
-    handler: src/patients/functions/mailSender.handler
-    name: ${sls:stage}-patients-mail-sender
-    events:
-      - eventBridge:
-          eventBus: default
-          pattern:
-            source:
-              - "medical-clinic"
-            detail-type:
-              - "patient-created"
-
-  patientsPushSender:
-    handler: src/patients/functions/pushSender.handler
-    name: ${sls:stage}-patients-push-sender
-    events:
-      - eventBridge:
-          eventBus: default
-          pattern:
-            source:
-              - "medical-clinic"
-            detail-type:
-              - "patient-created"
-
   # Doctor functions and resources
   doctorsCreate:
     handler: src/doctors/functions/create.handler
@@ -162,6 +97,71 @@ functions:
       - httpApi:
           method: delete
           path : /assistants/{id}
+
+# Patient functions and resources
+  patientsCreate:
+    handler: src/patients/functions/create.handler
+    name: ${sls:stage}-patients-create
+    events:
+      - httpApi:
+          method: post
+          path: /patients
+
+  patientsGetAll:
+    handler: src/patients/functions/get.getAllHandler
+    name: ${sls:stage}-patients-get-all
+    events:
+      - httpApi:
+          method: get
+          path : /patients
+  
+  patientsGetById:
+    handler: src/patients/functions/get.getByIdHandler
+    name: ${sls:stage}-patients-get-by-id
+    events:
+      - httpApi:
+          method: get
+          path : /patients/{id}
+  
+  patientsPatch:
+    handler: src/patients/functions/patch.handler
+    name: ${sls:stage}-patients-patch
+    events:
+      - httpApi:
+          method: patch
+          path : /patients/{id}
+
+  patientsDelete:
+    handler: src/patients/functions/remove.handler
+    name: ${sls:stage}-patients-delete
+    events:
+      - httpApi:
+          method: delete
+          path : /patients/{id}
+          
+  patientsMailSender:
+    handler: src/patients/functions/mailSender.handler
+    name: ${sls:stage}-patients-mail-sender
+    events:
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - "medical-clinic"
+            detail-type:
+              - "patient-created"
+
+  patientsPushSender:
+    handler: src/patients/functions/pushSender.handler
+    name: ${sls:stage}-patients-push-sender
+    events:
+      - eventBridge:
+          eventBus: default
+          pattern:
+            source:
+              - "medical-clinic"
+            detail-type:
+              - "patient-created"
 
   # Appointment functions and resources
   appointmentsCreate:
