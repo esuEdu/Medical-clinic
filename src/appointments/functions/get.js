@@ -9,6 +9,7 @@ import AppointmentsService from "../appointments.service.js";
 const getAll = async (event) => {
   try {
     const appointments = await AppointmentsService.getAll();
+
     return {
       statusCode: 200,
       body: appointments,

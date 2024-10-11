@@ -1,6 +1,6 @@
 import dynamoose from "dynamoose";
 import crypto from "node:crypto";
-import { appointmentSchema } from "./appointments.schema";
+import { appointmentSchema } from "./appointments.schema.js";
 
 const AppointmentModel = dynamoose.model("Appointment", appointmentSchema, {
   create: true,
@@ -11,6 +11,11 @@ async function create(payload) {
   payload.id = crypto.randomUUID();
 
   payload.PK = `APPOINTMENT#${payload.id}`;
+
+  // change this because the birthDate is always enter in undeifined
+  payload.appointmentDate = payload.appointmentDate
+    ? new Date(payload.appointmentDate)
+    : undefined;
 
   const { PK, ...result } = await AppointmentModel.create(payload);
 
@@ -33,7 +38,10 @@ async function getAll() {
 }
 
 async function update(id, payload) {
-  const { PK, ...result } = await AppointmentModel.update(`APPOINTMENT#${id}`, payload);
+  const { PK, ...result } = await AppointmentModel.update(
+    `APPOINTMENT#${id}`,
+    payload
+  );
 
   return result;
 }

@@ -11,7 +11,7 @@ export const appointmentSchema = new dynamoose.Schema(
 
     id: {
       type: String,
-      hashKey: true,
+      required: false,
     },
     patientName: {
       type: String,
