@@ -4,21 +4,17 @@ import httpJsonBodyParser from "@middy/http-json-body-parser";
 import httpHeaderNormalizer from "@middy/http-header-normalizer";
 import httpContentNegotiation from "@middy/http-content-negotiation";
 import httpResponseSerializer from "@middy/http-response-serializer";
-import DoctorsService from "../doctors.service.js";
+import AuthService from "../auth.service.js";
 
-const create = async (event) => {
+const login = async (event) => {
   try {
-    const doctor = await DoctorsService.create(event.body);
+    const user = await AuthService.login(event.body);
 
-    await DoctorsService.register(
-      doctor.id,
-      event.body.email,
-      event.body.password
-    );
-    
+    console.log("User", user);
+
     return {
-      statusCode: 201,
-      body: doctor,
+      statusCode: 200,
+      body: user,
     };
   } catch (error) {
     return {
@@ -52,4 +48,4 @@ export const handler = middy()
   )
   .use(httpErrorHandler())
   .use(httpJsonBodyParser({ disableContentTypeError: true }))
-  .handler(create);
+  .handler(login);

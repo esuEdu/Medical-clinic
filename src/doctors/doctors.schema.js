@@ -30,6 +30,7 @@ export const doctorSchema = new dynamoose.Schema(
     },
   },
   {
+    saveUnknown: true,
     timestamps: {
       createdAt: "createdAt",
       updatedAt: "updatedAt",
