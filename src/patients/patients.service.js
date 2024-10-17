@@ -1,6 +1,14 @@
 import dynamoose from "dynamoose";
 import crypto from "node:crypto";
 import { PatientSchema } from "./patient.schema.js";
+import * as OneSignal from "@onesignal/node-onesignal";
+import dotenv from "dotenv";
+dotenv.config();
+
+import {
+  EventBridgeClient,
+  PutEventsCommand,
+} from "@aws-sdk/client-eventbridge";
 
 const PatientModel = dynamoose.model("Patient", PatientSchema, {
   create: true,
@@ -10,16 +18,42 @@ const PatientModel = dynamoose.model("Patient", PatientSchema, {
 async function create(payload) {
   payload.id = crypto.randomUUID();
 
-  // change this because the birthDate is always enter in undeifined
+  payload.PK = `PATIENT#${payload.id}`;
+
   payload.birthDate = payload.birthDate
     ? new Date(payload.birthDate)
     : undefined;
 
-  payload.PK = `PATIENT#${payload.id}`;
+  try {
+    const { PK, password, ...result } = await PatientModel.create(payload);
 
-  const { PK, ...result } = await PatientModel.create(payload);
+    return result;
+  } catch (error) {
+    throw new Error(`Error creating patient: ${error.message}`);
+  }
+}
 
-  return result;
+async function register(id, email, password) {
+  const client = new EventBridgeClient({});
+
+  const payload = {
+    id: id,
+    email: email,
+    password: password,
+    group: "Patient",
+  };
+
+  await client.send(
+    new PutEventsCommand({
+      Entries: [
+        {
+          Source: "Medical-Clinic",
+          DetailType: "patientRegister",
+          Detail: JSON.stringify({ payload }),
+        },
+      ],
+    })
+  );
 }
 
 async function getOneById(id) {
@@ -38,18 +72,16 @@ async function getAll() {
 }
 
 async function update(id, payload) {
-  // change this because the birthDate is always enter in undeifined
+  const { PK, ...result } = await PatientModel.update(`PATIENT#${id}`, payload);
+
   payload.birthDate = payload.birthDate
     ? new Date(payload.birthDate)
     : undefined;
-
-  const { PK, ...result } = await PatientModel.update(`PATIENT#${id}`, payload);
 
   return result;
 }
 
 async function deleteById(id) {
-
   try {
     await PatientModel.delete({ PK: `PATIENT#${id}` });
     console.log("Successfully deleted item");
@@ -60,10 +92,34 @@ async function deleteById(id) {
   return { message: "Patient deleted successfully" };
 }
 
+async function notifyPatientCreated(patient) {
+  const client = new EventBridgeClient({});
+
+  await client.send(
+    new PutEventsCommand({
+      Entries: [
+        {
+          Source: "Medical-Clinic",
+          DetailType: "patientCreated",
+          Detail: JSON.stringify({ patient }),
+        },
+      ],
+    })
+  );
+}
+
+async function sendEmail(payload) {
+  
+}
+
+
 export default {
   create,
   getOneById,
   getAll,
   update,
   deleteById,
+  register,
+  notifyPatientCreated,
+  sendEmail,
 };

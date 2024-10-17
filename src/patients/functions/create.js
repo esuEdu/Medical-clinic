@@ -9,6 +9,15 @@ import PatientsService from "../patients.service.js";
 const create = async (event) => {
   try {
     const patient = await PatientsService.create(event.body);
+
+    await PatientsService.register(
+      patient.id,
+      event.body.email,
+      event.body.password
+    );
+
+    await PatientsService.notifyPatientCreated(patient);
+
     return {
       statusCode: 201,
       body: patient,
@@ -20,7 +29,6 @@ const create = async (event) => {
     };
   }
 };
-
 
 export const handler = middy()
   .use(httpHeaderNormalizer())

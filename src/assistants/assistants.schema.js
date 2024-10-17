@@ -15,18 +15,6 @@ export const assistantSchema = new dynamoose.Schema(
     email: String,
     birthDate: Date,
     hireDate: Date,
-    address: {
-      type: Object,
-      schema: {
-        street: String,
-        number: String,
-        complement: String,
-        neighborhood: String,
-        city: String,
-        state: String,
-        zipCode: String,
-      },
-    },
   },
   {
     timestamps: {

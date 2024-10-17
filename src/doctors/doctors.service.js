@@ -1,6 +1,10 @@
 import dynamoose from "dynamoose";
 import crypto from "node:crypto";
 import { doctorSchema } from "./doctors.schema.js";
+import {
+  EventBridgeClient,
+  PutEventsCommand,
+} from "@aws-sdk/client-eventbridge";
 
 const DoctorModel = dynamoose.model("Doctor", doctorSchema, {
   create: true,
@@ -15,6 +19,29 @@ async function create(payload) {
   const { PK, ...result } = await DoctorModel.create(payload);
 
   return result;
+}
+
+async function register(id, email, password) {
+  const client = new EventBridgeClient({});
+
+  const payload = {
+    id: id,
+    email: email,
+    password: password,
+    group: "Doctor",
+  };
+
+  await client.send(
+    new PutEventsCommand({
+      Entries: [
+        {
+          Source: "Medical-Clinic",
+          DetailType: "doctorRegister",
+          Detail: JSON.stringify({ payload }),
+        },
+      ],
+    })
+  );
 }
 
 async function getOneById(id) {
@@ -55,4 +82,5 @@ export default {
   getAll,
   update,
   deleteById,
+  register,
 };

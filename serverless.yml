@@ -6,14 +6,25 @@ service: Medical-Clinic
 provider:
   name: aws
   runtime: nodejs20.x
+  region: us-east-1
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
-            - dynamodb:*
             - events:*
+            - cognito-idp:*
+            - dynamodb:*
           Resource: "*"
+
+  httpApi:
+    cors: true
+    authorizers:
+      userAuthorizer:
+        identitySource: $request.header.Authorization
+        issuerUrl: {"Fn::Join": ["", ["https://cognito-idp.us-east-1.amazonaws.com/", { Ref: UserPool }]]}
+        audience: { Ref: UserPoolClient }
+
 
 functions:
   # Doctor functions and resources
@@ -140,28 +151,26 @@ functions:
           path : /patients/{id}
           
   patientsMailSender:
-    handler: src/patients/functions/mailSender.handler
+    handler: src/patients/functions/email-sender.handler
     name: ${sls:stage}-patients-mail-sender
     events:
       - eventBridge:
-          eventBus: default
           pattern:
             source:
-              - "medical-clinic"
+              - "Medical-Clinic"
             detail-type:
-              - "patient-created"
+              - "patientCreated"
 
   patientsPushSender:
-    handler: src/patients/functions/pushSender.handler
+    handler: src/patients/functions/push-sender.handler
     name: ${sls:stage}-patients-push-sender
     events:
       - eventBridge:
-          eventBus: default
           pattern:
             source:
-              - "medical-clinic"
+              - "Medical-Clinic"
             detail-type:
-              - "patient-created"
+              - "patientCreated"
 
   # Appointment functions and resources
   appointmentsCreate:
@@ -171,6 +180,10 @@ functions:
       - httpApi:
           method: post
           path: /appointments
+          authorizer: 
+            name: userAuthorizer
+            groups:
+              - Doctor
   
   appointmentsGetAll:
     handler: src/appointments/functions/get.getAllHandler
@@ -204,10 +217,29 @@ functions:
           method: delete
           path : /appointments/{id}
 
+  # auth functions
+  authLogin:
+    handler: src/auth/functions/login.handler
+    name: ${sls:stage}-auth-login
+    events:
+      - httpApi:
+          method: post
+          path: /auth/login
+
+  authRegister:
+    handler: src/auth/functions/register.handler
+    name: ${sls:stage}-auth-register
+    events:
+      - eventBridge:
+          pattern:
+            source:
+              - "Medical-Clinic"
+            detail-type:
+              - "patientRegister"
+
 resources:
   Resources:
-
-  # Doctor Table
+    # Doctor Table
     DoctorTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -220,7 +252,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
-  # Assistant Table
+    # Assistant Table
     AssistantTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -233,7 +265,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
-  # Patient Table
+    # Patient Table
     PatientTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -246,7 +278,7 @@ resources:
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
 
-  # Appointment Table
+    # Appointment Table
     AppointmentTable:
       Type: AWS::DynamoDB::Table
       Properties:
@@ -258,3 +290,69 @@ resources:
           - AttributeName: PK #AppointmentId
             KeyType: HASH
         BillingMode: PAY_PER_REQUEST
+
+    # Cognito User Pool
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: ${sls:stage}-UserPool
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+        UsernameAttributes:
+          - email
+        AutoVerifiedAttributes:
+          - email
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+            RequireLowercase: true
+            RequireNumbers: true
+            RequireSymbols: true
+            RequireUppercase: false
+
+    # Cognito User Client
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: ${sls:stage}-UserPoolClient
+        GenerateSecret: false
+        UserPoolId: 
+          Ref: UserPool
+        AccessTokenValidity: 5
+        IdTokenValidity: 5
+        ExplicitAuthFlows:
+          - ADMIN_NO_SRP_AUTH
+
+    # Cognito Admin Group
+    AdminGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Admin
+        UserPoolId: 
+          Ref: UserPool
+
+    # Cognito Doctor Group
+    DoctorGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Doctor
+        UserPoolId: 
+          Ref: UserPool
+
+    # Cognito Assistant Group
+    AssistantGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Assistant
+        UserPoolId: 
+          Ref: UserPool
+
+    # Cognito Patient Group
+    PatientGroup:
+      Type: AWS::Cognito::UserPoolGroup
+      Properties:
+        GroupName: Patient
+        UserPoolId: 
+          Ref: UserPool
